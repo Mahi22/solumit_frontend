@@ -1,0 +1,44 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="overall-data">
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: relative;
+      }
+    </style>
+
+    <div>Overall's data</div>
+  </template>
+
+  <script>
+    class OverallData {
+
+      beforeRegister() {
+        this.is = 'overall-data';
+        this.properties = {
+          top: {
+            type: String,
+            value: ''
+          },
+          bottom: {
+            type: String,
+            value: ''
+          }
+        };
+      }
+
+      created() {}
+
+      ready() {
+      }
+
+      attached() {}
+      detached() {}
+      attributeChanged() {}
+    }
+
+    Polymer(OverallData);
+  </script>
+</dom-module>

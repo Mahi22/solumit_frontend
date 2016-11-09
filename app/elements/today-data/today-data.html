@@ -1,0 +1,355 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="today-data">
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: relative;
+        width: 100%;
+        @apply(--layout-vertical);
+      }
+
+      :host .dateInfo {
+        @apply(--layout-horizontal);
+        @apply(--layout-around-justified);
+        margin-top: 8px;
+        /*margin-bottom: 8px;*/
+        padding: 8px;
+      }
+
+      .subSection {
+        @apply(--layout-horizontal);
+      }
+
+      .sub1 {
+        @apply(--paper-font-display2);
+        margin: auto 8px;
+      }
+
+      .sub2 {
+        @apply(--layout-vertical);
+      }
+
+      .sub2 .inner1 {
+        @apply(--paper-font-body2);
+      }
+
+      .sub2 .inner2 {
+        @apply(--paper-font-body1);
+      }
+
+      .numericInfo {
+        /*@apply(--layout-vertical);*/
+        background-color: var(--paper-grey-200);
+        padding-top: 16px;
+        padding-bottom: 16px;
+        text-align: center;
+      }
+
+      .numericInfo .text {
+        @apply(--paper-font-title);
+        color: var(--paper-grey-500);
+        font-weight: normal;
+        margin-bottom: 16px;
+      }
+
+      .numericInfo .value {
+        @apply(--paper-font-display2);
+        color: var(--paper-grey-800);
+        font-weight: bold;
+      }
+
+      :host .gridInfo {
+        @apply(--layout-horizontal);
+        @apply(--layout-around-justified);
+        /*margin-top: 8px;*/
+        /*margin-bottom: 24px;*/
+        padding: 8px;
+      }
+
+      .subGrid {
+        @apply(--layout-vertical);
+      }
+
+      .gridSub1 {
+        @apply(--paper-font-body2);
+      }
+
+      .solarIcon {
+        --iron-icon-fill-color: #7ED321;
+      }
+
+      .gridIcon {
+        --iron-icon-fill-color: #C67B00;
+      }
+
+      .inverterIcon {
+        --iron-icon-fill-color: #BED4EF;
+      }
+
+      .gridSub2 {
+        @apply(--paper-font-body1);
+        text-align: center;
+      }
+
+      neon-animated-pages {
+        @apply(--layout-flex);
+      }
+
+      div#todayChartContainer {
+        height: 100%;
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+      }
+
+      div#todayAreaContainer {
+        height: 100%;
+        @apply(--layout-horizontal);
+        @apply(--layout-center);
+      }
+
+      google-chart {
+        margin: auto;
+      }
+    </style>
+
+    <!-- <div class="date">
+      <div>12:30 PM {{dateFormat(date, 'MMMM')}}</div>
+      <div>Date Day and year</div>
+    </div> -->
+
+      <div class="dateInfo">
+        <div class="subSection">
+          <div class="sub1">[[dateFormat(date, 'hh')]]</div>
+          <div class="sub2">
+            <span class="inner1">[[dateFormat(date, 'mm')]]</span>
+            <span class="inner2">[[dateFormat(date, 'a')]]</span>
+          </div>
+        </div>
+        <div class="subSection">
+          <div class="sub1">[[dateFormat(date, 'DD')]]</div>
+          <div class="sub2">
+            <span class="inner1">[[dateFormat(date, 'MMMM')]]</span>
+            <span class="inner2">[[dateFormat(date, 'dddd YYYY')]]</span>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="numericInfo">
+        <div class="text">
+          Today's Power Generation is
+        </div>
+        <div class="value">
+          [[powerSaved]] kWh
+        </div>
+      </div>
+
+      <div class="gridInfo">
+        <div class="subGrid">
+          <div class="gridSub1">[[solarPower]] kW</div>
+          <div class="gridSub2">
+            <iron-icon class="solarIcon" icon="image:wb-sunny"></iron-icon>
+            <div>Solar</div>
+          </div>
+        </div>
+        <div class="subGrid">
+          <div class="gridSub1">[[gridPower]] kW</div>
+          <div class="gridSub2">
+            <iron-icon class="gridIcon" icon="image:grid-on"></iron-icon>
+            <div>Grid</div>
+          </div>
+        </div>
+        <div class="subGrid">
+          <div class="gridSub1">[[inverterPower]] kW</div>
+          <div class="gridSub2">
+            <iron-icon class="inverterIcon" icon="image:flash-on"></iron-icon>
+            <div>Inverter</div>
+          </div>
+        </div>
+      </div>
+
+        <neon-animated-pages id="dayPages" selected="[[selected]]" entry-animation="[[entryAnimation]]" exit-animation="[[exitAnimation]]">
+          <neon-animatable class="gridSub2">
+            <span>Loading</span>
+          </neon-animatable>
+          <neon-animatable>
+            <div class="chartContainer" id="todayChartContainer">
+            </div>
+          </neon-animatable>
+          <neon-animatable>
+            <div class="chartContainer" id="todayAreaContainer">
+            </div>
+          </neon-animatable>
+        </neon-animated-pages>
+
+  </template>
+
+  <script>
+    class TodayData {
+
+      beforeRegister() {
+        this.is = 'today-data';
+
+        this.properties = {
+          date: {
+            type: String
+          },
+          tabSelected: {
+            type: Number,
+            value: null,
+            observer: '_toggledTab'
+          },
+          selected: {
+            type: Number,
+            value: null
+          },
+          entryAnimation: {
+            type: String,
+            value: ''
+          },
+          exitAnimation: {
+            type: String,
+            value: ''
+          },
+          store: {
+            type: Object
+          },
+          solarPower: {
+            type: String,
+            value: '.....'
+          },
+          gridPower: {
+            type: String,
+            value: '.....'
+          },
+          inverterPower: {
+            type: String,
+            value: '.....'
+          },
+          powerSaved: {
+            type: String,
+            value: '.....'
+          }
+        };
+        this.showDetailed = function() {
+          this.selected = 1;
+        };
+
+        this.showOverall = function() {
+          this.selected = 0;
+        };
+
+        this.chartToggle = function(e) {
+          if (this.selected === 0) {
+            this.selected = 1;
+          } else {
+            this.selected = 0;
+          }
+        };
+      }
+
+      _toggledTab(newValue, oldValue = 0) {
+        if (newValue >= oldValue) {
+          this.entryAnimation = 'fade-in-animation';
+          this.exitAnimation = 'fade-out-animation';
+        } else {
+          this.entryAnimation = 'fade-out-animation';
+          this.exitAnimation = 'fade-in-animation';
+        }
+        this.selected = newValue;
+      }
+
+      _storeUpdated() {
+        console.log('getting value here', this);
+      }
+
+      dateFormat(date, format) {
+        return moment(date).format(format);
+      }
+
+      created() {}
+
+      renderAreaChart(width, height) {
+        var container = this.$.todayAreaContainer;
+        var that = this;
+
+        function onClickArea(d) {
+          that.selected = 1;
+        }
+
+        var svg = d3.select(container).append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+        constructAreaChart(svg, height, width, onClickArea);
+      }
+
+      renderChart(width, height, data) {
+        var container = this.$.todayChartContainer;
+        var that = this;
+
+        function onClickBar(value) {
+          that.selected = 2;
+          that.renderAreaChart(width, height);
+        }
+
+        if (d3.select('#todayStackedChart')[0]) {
+          d3.select('#todayStackedChart').remove();
+        }
+
+        var svg = d3.select(container).append('svg')
+            .attr('id', 'todayStackedChart')
+            .attr('width', width)
+            .attr('height', height);
+
+        constructStacked(svg, height, width, onClickBar, data);
+
+      }
+
+      ready() {
+        setTimeout(() => {
+
+
+          this.selected = 0;
+          // this.renderAreaChart(width, height);
+          // console.log('got height and width');
+        }, 2);
+      }
+
+
+
+      attached() {
+        if(this.store && this.store.getState) {
+          var that = this;
+
+          function storeInitiated() {
+            var state = that.store.getState();
+
+            const width = window.innerWidth <= 600 ? document.getElementById('mainContainer').offsetWidth : document.getElementById('mainContainer').offsetWidth - 128,
+                  height = document.getElementById('mainContainer').offsetHeight - 300;
+
+
+            if(state.today) {
+              that.solarPower = Number(state.today.solarPower).toFixed(2);
+              that.gridPower = Number(state.today.gridPower).toFixed(2);
+              that.inverterPower = Number(state.today.inverterPower).toFixed(2);
+              that.powerSaved = Number(state.today.powerSaved).toFixed(4);
+              that.date = moment(state.today.date, 'YY/MM/DD,hh:mm:ss');
+              that.renderChart(width, height, [state.today.gridBarData, state.today.solarBarData]);
+              // this.renderAreaChart(width, height);
+              that.selected = 1;
+            }
+          }
+
+          that.store.subscribe(storeInitiated);
+        }
+      }
+      detached() {}
+      attributeChanged() {}
+    }
+
+    Polymer(TodayData);
+  </script>
+</dom-module>

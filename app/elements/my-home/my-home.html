@@ -1,0 +1,213 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="my-home">
+  <template>
+    <style>
+      :host {
+        overflow: hidden;
+        @apply(--layout-vertical);
+      }
+
+      .dn {
+        display: none;
+      }
+
+      neon-animated-pages {
+        @apply(--layout-flex);
+      }
+
+      neon-animatable {
+        color: black;
+        @apply(--layout-horizontal);
+        @apply(--layout-center-center);
+        @apply(--paper-font-body1);
+      }
+
+      paper-tabs {
+        position: relative;
+        max-height: 48px;
+        color: var(--primary-background-color);
+        background-color: var(--paper-orange-700);
+      }
+
+      .tabView {
+        display: none;
+      }
+
+      .tabView.iron-selected {
+        display: block;
+      }
+
+      neon-animated-pages {
+        display: block;
+        position: relative;
+      }
+
+      paper-tab {
+        padding-left: 24px;
+        padding-right: 24px;
+      }
+
+
+    </style>
+
+    <h1 autoselect="true" class="page-title dn" tabindex="-1">Home</h1>
+
+    <paper-tabs selected="{{tabSelected}}" scrollable>
+      <paper-tab>Choose a Month</paper-tab>
+      <paper-tab>Last Month</paper-tab>
+      <paper-tab>Last Week</paper-tab>
+      <paper-tab>Yesterday</paper-tab>
+      <paper-tab id="today">Today</paper-tab>
+      <paper-tab>Overall</paper-tab>
+    </paper-tabs>
+
+    <neon-animated-pages id="mainPages" selected="[[selected]]" entry-animation="[[entryAnimation]]" exit-animation="[[exitAnimation]]">
+        <neon-animatable>
+          <div style="width:100%;height:100%;">
+            <paper-date-picker min-date="September 20, 2016" store=[[store]] date={{date}}></paper-date-picker>
+          </div>
+        </neon-animatable>
+        <neon-animatable>
+          <month-data></month-data>
+        </neon-animatable>
+        <neon-animatable>
+          <week-data></week-data>
+        </neon-animatable>
+        <neon-animatable>
+          <yesterday-data date=[[yesterday]] store=[[store]] class="h-100">
+          </yesterday-data>
+        </neon-animatable>
+        <neon-animatable>
+          <today-data date=[[currentDate]] store=[[store]] class="h-100">
+          </today-data>
+        </neon-animatable>
+        <neon-animatable>
+          <overall-data></overall-data>
+        </neon-animatable>
+    </neon-animated-pages>
+  </template>
+
+  <script>
+    class MyHome {
+
+      beforeRegister() {
+        this.is = 'my-home';
+        this.properties = {
+          currentDate: {
+            type: String,
+            value: new Date()
+          },
+          date: {
+            type: Date
+          },
+          yesterday: {
+            type: String,
+            value: new Date(Date.now() - 8.64e7)
+          },
+          tabSelected: {
+            type: Number,
+            value: null,
+            observer: '_toggledTab'
+          },
+          selected: {
+            type: Number,
+            value: null,
+            observer: '_toggleSelected'
+          },
+          entryAnimation: {
+            type: String,
+            value: ''
+          },
+          exitAnimation: {
+            type: String,
+            value: ''
+          },
+          store: {
+            type: Object,
+            value: {}
+          }
+        };
+      }
+
+      _toggledTab(newValue, oldValue = 0) {
+        if (newValue >= oldValue) {
+          this.entryAnimation = 'slide-from-right-animation';
+          this.exitAnimation = 'slide-left-animation';
+        } else {
+          this.entryAnimation = 'slide-from-left-animation';
+          this.exitAnimation = 'slide-right-animation';
+        }
+
+        this.selected = newValue;
+
+      }
+
+    _toggleSelected(newValue, oldValue) {
+      var that = this;
+
+      if (newValue !== oldValue && newValue !== null) {
+        switch (newValue) {
+          case 2:
+            fetchData(that.store.dispatch, 'DAY', moment(that.date).format('YY/MM/DD'));
+            break;
+          case 3:
+            fetchData(that.store.dispatch, 'YESTERDAY', moment(that.yesterday).format('YY/MM/DD'));
+            break;
+          case 4:
+            fetchData(that.store.dispatch, 'TODAY', moment().format('YY/MM/DD'));
+            break;
+          default:
+            break;
+        }
+      }
+    }
+
+      togglePanel() {
+        const drawer = Polymer.dom(document).querySelector('#paperDrawerPanel');
+        drawer.togglePanel();
+      }
+
+      created() {}
+
+      ready() {
+
+        // Store reducer created -
+
+        function solum(state, action) {
+          if (typeof state === 'undefined') {
+            return {};
+          }
+
+          switch (action.type) {
+            case 'DAY':
+              return _.clone({ day: action.payload }, state);
+            case 'TODAY':
+              return _.clone({ today: action.payload }, state);
+            case 'YESTERDAY':
+              return _.clone({ yesterday: action.payload }, state);
+            case 'WEEK':
+              return state;
+            case 'MONTH':
+              return state;
+            default:
+              return state;
+          }
+        }
+
+        this.store = Redux.createStore(solum);
+
+
+        this.selected = 4;
+
+
+      }
+
+      attached() {}
+      detached() {}
+      attributeChanged() {}
+    }
+
+    Polymer(MyHome);
+  </script>
+</dom-module>

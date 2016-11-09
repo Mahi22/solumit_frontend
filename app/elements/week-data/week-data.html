@@ -1,0 +1,44 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="week-data">
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: relative;
+      }
+    </style>
+
+    <div>Week's data</div>
+  </template>
+
+  <script>
+    class WeekData {
+
+      beforeRegister() {
+        this.is = 'week-data';
+        this.properties = {
+          top: {
+            type: String,
+            value: ''
+          },
+          bottom: {
+            type: String,
+            value: ''
+          }
+        };
+      }
+
+      created() {}
+
+      ready() {
+      }
+
+      attached() {}
+      detached() {}
+      attributeChanged() {}
+    }
+
+    Polymer(WeekData);
+  </script>
+</dom-module>
